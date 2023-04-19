@@ -81,9 +81,11 @@ def learn_model(data, verbose=False):
         new_thetas = []
         for j in range(len(thetas)):
             new_thetas.append(thetas[j] - alpha * derivative(j, thetas, x_data, y_data))
-        thetas = new_thetas
+        thetas = np.array(new_thetas)
         previous_error = current_error
         current_error = calculate_error(thetas, x_data, y_data)
+        if current_error > previous_error:
+            alpha = alpha / 10
     return thetas
 
 
@@ -111,7 +113,7 @@ if __name__ == "__main__":
     }
 
     results = generate_data(clean_data, 10, "hills")
-    print(results[0][0])
+
     temp = np.empty(len(results[0][0]) + 1)
     count = 0
     for result in results:

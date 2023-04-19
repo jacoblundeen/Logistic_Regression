@@ -131,6 +131,22 @@ def transform_data(data: List[Tuple[List]]) -> List:
     return temp
 
 
+def evaluate(results: List[Tuple]) -> float:
+    true, pred = map(list, zip(*results))
+    confusion_matrix = np.zeros((2,2))
+    error_rate = (sum(i != j for i, j in zip(true, pred)) / len(true)) * 100
+    for i in range(len(pred)):
+        if int(pred[i]) == 1 and int(true[i]) == 0:
+            confusion_matrix[0, 0] += 1  # True Positives
+        elif int(pred[i]) == -1 and int(true[i]) == 1:
+            confusion_matrix[0, 1] += 1  # False Positives
+        elif int(pred[i]) == 0 and int(true[i]) == 1:
+            confusion_matrix[1, 0] += 1  # False Negatives
+        elif int(pred[i]) == 0 and int(true[i]) == 0:
+            confusion_matrix[1, 1] += 1  # True Negatives
+    return error_rate, confusion_matrix
+
+
 if __name__ == "__main__":
     clean_data = {
         "plains": [
@@ -154,10 +170,13 @@ if __name__ == "__main__":
         ]
     }
 
-    train_data = transform_data(generate_data(clean_data, 100, "hills"))
-    test_data = transform_data(generate_data(clean_data, 100, "hills"))
+    train_data = transform_data(generate_data(clean_data, 10, "hills"))
+    test_data = transform_data(generate_data(clean_data, 10, "hills"))
 
     model = learn_model(train_data, True)
-    results = apply_model(model, test_data, False)
+    results = apply_model(model, test_data, True)
+    error_rate, confusion_matrix = evaluate(results)
     print(model)
     print(results)
+    print(str(error_rate) + "%")
+    print(confusion_matrix)

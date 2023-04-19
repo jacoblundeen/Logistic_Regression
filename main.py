@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from typing import List, Tuple, Dict, Callable
 
 random.seed(49)
 
@@ -49,27 +50,27 @@ def generate_data(data, n, key_label):
     return result
 
 
-def calculate_error(thetas, x_data, y_data):
+def calculate_error(thetas: List, x_data: List, y_data: List) -> float:
     n = len(x_data)
     y_hat = calculate_yhat(thetas, x_data)
     error = (-1 / n) * np.sum(y_data * np.log(y_hat) + np.subtract(1, y_data) * np.log(np.subtract(1, y_hat)))
     return error
 
 
-def calculate_yhat(thetas, x_data):
+def calculate_yhat(thetas: List, x_data: List) -> List:
     y_hat = []
-    for index in range(len(x_data)):
-        y_hat.append(1 / (1 + sum(np.exp(-1 * thetas * x_data[index]))))
+    for obs in x_data:
+        y_hat.append(1 / (1 + np.exp(np.sum(-1 * thetas * obs))))
     return y_hat
 
 
-def derivative(j, thetas, x_data, y_data):
+def derivative(j: int, thetas: List, x_data: List, y_data: List) -> int:
     y_hat = calculate_yhat(thetas, x_data)
-    deriv = (1/len(x_data)) * np.sum(np.subtract(y_hat, y_data) * x_data[:,j])
+    deriv = (1/len(x_data)) * np.sum(np.subtract(y_hat, y_data) * x_data[:, j])
     return deriv
 
 
-def learn_model(data, verbose=False):
+def learn_model(data: List[List], verbose=False) -> List:
     x_data = np.delete(data, -1, axis=1)
     y_data = data[:, [-1]]
     thetas = np.random.uniform(-1, 1, len(x_data[0]))
@@ -77,6 +78,7 @@ def learn_model(data, verbose=False):
     alpha = 0.1
     previous_error = 0.0
     current_error = calculate_error(thetas, x_data, y_data)
+    count = 0
     while abs(current_error - previous_error) > epsilon:
         new_thetas = []
         for j in range(len(thetas)):
@@ -84,9 +86,49 @@ def learn_model(data, verbose=False):
         thetas = np.array(new_thetas)
         previous_error = current_error
         current_error = calculate_error(thetas, x_data, y_data)
+        if verbose and count % 1000 == 0:
+            print("The current error is: " + str(current_error))
         if current_error > previous_error:
             alpha = alpha / 10
+        count += 1
     return thetas
+
+
+def apply_model(model: List, test_data: List, labeled=False) -> List[Tuple]:
+    predictions = []
+    x_test = np.delete(test_data, -1, axis=1)
+    y_test = test_data[:, [-1]]
+    count = 0
+    for obs in x_test:
+        pred = np.sum(model * obs)
+        if labeled:
+            if pred >= 0.5:
+                predictions.append((y_test[count][0], 1))
+            else:
+                predictions.append((y_test[count][0], 0))
+        else:
+            if pred >= 0.5:
+                predictions.append((1, pred))
+            else:
+                predictions.append((0, pred))
+        count += 1
+    return predictions
+
+
+def transform_data(data: List[Tuple[List]]) -> List:
+    temp = np.empty(len(data[0][0]) + 1)
+    x_0 = np.ones([len(data), 1])
+    count = 0
+    for result in data:
+        temp1 = result[0]
+        temp1.append(result[1])
+        if count == 0:
+            temp = temp1
+        else:
+            temp = np.vstack((temp, temp1))
+        count += 1
+    temp = np.append(x_0, temp, axis=1)
+    return temp
 
 
 if __name__ == "__main__":
@@ -112,18 +154,10 @@ if __name__ == "__main__":
         ]
     }
 
-    results = generate_data(clean_data, 10, "hills")
+    train_data = transform_data(generate_data(clean_data, 100, "hills"))
+    test_data = transform_data(generate_data(clean_data, 100, "hills"))
 
-    temp = np.empty(len(results[0][0]) + 1)
-    count = 0
-    for result in results:
-        temp1 = result[0]
-        temp1.append(result[1])
-        if count == 0:
-            temp = temp1
-        else:
-            temp = np.vstack((temp, temp1))
-        count += 1
-
-    model = learn_model(temp)
+    model = learn_model(train_data, True)
+    results = apply_model(model, test_data, False)
     print(model)
+    print(results)

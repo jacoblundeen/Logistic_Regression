@@ -72,7 +72,7 @@ def derivative(j: int, thetas: List, x_data: List, y_data: List) -> int:
 
 def learn_model(data: List[List], verbose=False) -> List:
     x_data = np.delete(data, -1, axis=1)
-    y_data = data[:, [-1]]
+    y_data = data[:, -1]
     thetas = np.random.uniform(-1, 1, len(x_data[0]))
     epsilon = 1E-07
     alpha = 0.1
@@ -97,15 +97,15 @@ def learn_model(data: List[List], verbose=False) -> List:
 def apply_model(model: List, test_data: List, labeled=False) -> List[Tuple]:
     predictions = []
     x_test = np.delete(test_data, -1, axis=1)
-    y_test = test_data[:, [-1]]
+    y_test = test_data[:, -1]
     count = 0
     for obs in x_test:
         pred = np.sum(model * obs)
         if labeled:
             if pred >= 0.5:
-                predictions.append((y_test[count][0], 1))
+                predictions.append((y_test[count], 1))
             else:
-                predictions.append((y_test[count][0], 0))
+                predictions.append((y_test[count], 0))
         else:
             if pred >= 0.5:
                 predictions.append((1, pred))
@@ -136,9 +136,9 @@ def evaluate(results: List[Tuple]) -> float:
     confusion_matrix = np.zeros((2,2))
     error_rate = (sum(i != j for i, j in zip(true, pred)) / len(true)) * 100
     for i in range(len(pred)):
-        if int(pred[i]) == 1 and int(true[i]) == 0:
+        if int(pred[i]) == 1 and int(true[i]) == 1:
             confusion_matrix[0, 0] += 1  # True Positives
-        elif int(pred[i]) == -1 and int(true[i]) == 1:
+        elif int(pred[i]) == 1 and int(true[i]) == 0:
             confusion_matrix[0, 1] += 1  # False Positives
         elif int(pred[i]) == 0 and int(true[i]) == 1:
             confusion_matrix[1, 0] += 1  # False Negatives
@@ -170,8 +170,8 @@ if __name__ == "__main__":
         ]
     }
 
-    train_data = transform_data(generate_data(clean_data, 10, "hills"))
-    test_data = transform_data(generate_data(clean_data, 10, "hills"))
+    train_data = transform_data(generate_data(clean_data, 100, "hills"))
+    test_data = transform_data(generate_data(clean_data, 100, "hills"))
 
     model = learn_model(train_data, True)
     results = apply_model(model, test_data, True)

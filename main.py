@@ -53,7 +53,9 @@ def generate_data(data, n, key_label):
 def calculate_error(thetas: List, x_data: List, y_data: List) -> float:
     n = len(x_data)
     y_hat = calculate_yhat(thetas, x_data)
-    error = (-1 / n) * np.sum(y_data * np.log(y_hat) + np.subtract(1, y_data) * np.log(np.subtract(1, y_hat)))
+    temp = np.subtract(1, y_hat)
+    temp2 = np.log(temp, out=temp, where=temp > 0)
+    error = (-1 / n) * np.sum(y_data * np.log(y_hat) + np.subtract(1, y_data) * temp2)
     return error
 
 
@@ -66,17 +68,16 @@ def calculate_yhat(thetas: List, x_data: List) -> List:
 
 def derivative(j: int, thetas: List, x_data: List, y_data: List) -> int:
     y_hat = calculate_yhat(thetas, x_data)
-    deriv = (1/len(x_data)) * np.sum(np.subtract(y_hat, y_data) * x_data[:, j])
+    deriv = (1 / len(x_data)) * np.sum(np.subtract(y_hat, y_data) * x_data[:, j])
     return deriv
 
 
 def learn_model(data: List[List], verbose=False) -> List:
+    data = transform_data(data)
     x_data = np.delete(data, -1, axis=1)
     y_data = data[:, -1]
     thetas = np.random.uniform(-1, 1, len(x_data[0]))
-    epsilon = 1E-07
-    alpha = 0.1
-    previous_error = 0.0
+    epsilon, alpha, previous_error = 1E-07, 0.1, 0.0
     current_error = calculate_error(thetas, x_data, y_data)
     count = 0
     while abs(current_error - previous_error) > epsilon:
@@ -95,6 +96,7 @@ def learn_model(data: List[List], verbose=False) -> List:
 
 
 def apply_model(model: List, test_data: List, labeled=False) -> List[Tuple]:
+    test_data = transform_data(test_data)
     predictions = []
     x_test = np.delete(test_data, -1, axis=1)
     y_test = test_data[:, -1]
@@ -103,9 +105,9 @@ def apply_model(model: List, test_data: List, labeled=False) -> List[Tuple]:
         pred = np.sum(model * obs)
         if labeled:
             if pred >= 0.5:
-                predictions.append((y_test[count], 1))
+                predictions.append((int(y_test[count]), 1))
             else:
-                predictions.append((y_test[count], 0))
+                predictions.append((int(y_test[count]), 0))
         else:
             if pred >= 0.5:
                 predictions.append((1, pred))
@@ -115,7 +117,7 @@ def apply_model(model: List, test_data: List, labeled=False) -> List[Tuple]:
     return predictions
 
 
-def transform_data(data: List[Tuple[List]]) -> List:
+def transform_data(data: List[Tuple[List, int]]) -> List:
     temp = np.empty(len(data[0][0]) + 1)
     x_0 = np.ones([len(data), 1])
     count = 0
@@ -131,9 +133,9 @@ def transform_data(data: List[Tuple[List]]) -> List:
     return temp
 
 
-def evaluate(results: List[Tuple]) -> float:
+def evaluate(results: List[Tuple]):
     true, pred = map(list, zip(*results))
-    confusion_matrix = np.zeros((2,2))
+    confusion_matrix = np.zeros((2, 2))
     error_rate = (sum(i != j for i, j in zip(true, pred)) / len(true)) * 100
     for i in range(len(pred)):
         if int(pred[i]) == 1 and int(true[i]) == 1:
@@ -144,7 +146,11 @@ def evaluate(results: List[Tuple]) -> float:
             confusion_matrix[1, 0] += 1  # False Negatives
         elif int(pred[i]) == 0 and int(true[i]) == 0:
             confusion_matrix[1, 1] += 1  # True Negatives
-    return error_rate, confusion_matrix
+    for k in range(10):
+        print(results[k])
+    print("The error rate is: " + str(error_rate) + "%")
+    print("The confusion matrix is: ")
+    print(confusion_matrix)
 
 
 if __name__ == "__main__":
@@ -170,13 +176,26 @@ if __name__ == "__main__":
         ]
     }
 
-    train_data = transform_data(generate_data(clean_data, 100, "hills"))
-    test_data = transform_data(generate_data(clean_data, 100, "hills"))
+    train_data = generate_data(clean_data, 100, "hills")
+    test_data = generate_data(clean_data, 100, "hills")
 
     model = learn_model(train_data, True)
     results = apply_model(model, test_data, True)
-    error_rate, confusion_matrix = evaluate(results)
-    print(model)
-    print(results)
-    print(str(error_rate) + "%")
-    print(confusion_matrix)
+    evaluate(results)
+    # data1 = [([1, 2, 3], 4), ([4, 5, 6], 7), ([8, 9, 10], 11)]
+    # data2 = [([1, 2, 3], 9), ([4, 1123, 6], 7), ([0, 9, 10], 11)]
+    # data3 = [([1, 2, 3, 9], 434), ([4, 5, 6, 111], 7), ([8, 9, 10, 134], 1341)]
+    # t_data1 = transform_data(data1)
+    # t_data2 = transform_data(data2)
+    # t_data3 = transform_data(data3)
+    # x_data1 = np.delete(t_data1, -1, axis=1)
+    # x_data2 = np.delete(t_data2, -1, axis=1)
+    # x_data3 = np.delete(t_data3, -1, axis=1)
+    # y_data1 = t_data1[:, -1]
+    # y_data2 = t_data2[:, -1]
+    # y_data3 = t_data3[:, -1]
+    # thetas1 = np.array([0.1, -0.1, 0.5, 0.75])
+    # thetas2 = np.array([-0.1, 1, 0.5, 0.6])
+    # thetas3 = np.array([0.5, -0.5, 0.5, 0.8, 0.9])
+    # temp = calculate_error(thetas3, x_data3, y_data3)
+    # print(temp)

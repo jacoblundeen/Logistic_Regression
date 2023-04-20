@@ -182,20 +182,4 @@ if __name__ == "__main__":
     model = learn_model(train_data, True)
     results = apply_model(model, test_data, True)
     evaluate(results)
-    # data1 = [([1, 2, 3], 4), ([4, 5, 6], 7), ([8, 9, 10], 11)]
-    # data2 = [([1, 2, 3], 9), ([4, 1123, 6], 7), ([0, 9, 10], 11)]
-    # data3 = [([1, 2, 3, 9], 434), ([4, 5, 6, 111], 7), ([8, 9, 10, 134], 1341)]
-    # t_data1 = transform_data(data1)
-    # t_data2 = transform_data(data2)
-    # t_data3 = transform_data(data3)
-    # x_data1 = np.delete(t_data1, -1, axis=1)
-    # x_data2 = np.delete(t_data2, -1, axis=1)
-    # x_data3 = np.delete(t_data3, -1, axis=1)
-    # y_data1 = t_data1[:, -1]
-    # y_data2 = t_data2[:, -1]
-    # y_data3 = t_data3[:, -1]
-    # thetas1 = np.array([0.1, -0.1, 0.5, 0.75])
-    # thetas2 = np.array([-0.1, 1, 0.5, 0.6])
-    # thetas3 = np.array([0.5, -0.5, 0.5, 0.8, 0.9])
-    # temp = calculate_error(thetas3, x_data3, y_data3)
-    # print(temp)
+
